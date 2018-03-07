@@ -83,8 +83,8 @@ struct fluint8 {
 
 		float ax, bx, x = 0.0f;
 		for (float c = 2147483648.0f; c != 8388608.0f; c *= 0.5f) {
-			a -= ax = (a + 1.0f + c - c) / 2.0f;
-			b -= bx = (b + 1.0f + c - c) / 2.0f;
+			a -= ax = (a + 1.0f + c-c)/ 2.0f;
+			b -= bx = (b + 1.0f + c-c)/ 2.0f;
 			x = 0.5f * x + ax * bx;
 		}
 		return fluint8(x);
