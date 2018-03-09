@@ -1,15 +1,11 @@
 #pragma once
 
-#include <cmath>
 #include <cstring>
 
 struct fluint8 {
 	//-------------------------------------------
 	//constructors:
-	fluint8(float val_) : val(val_) {
-		val = std::fmod(std::floor(val), 256.0f);
-		if (val < 0.0f) val += 256.0f;
-	}
+	fluint8(float val_) : val(val_) { }
 	//-------------------------------------------
 	//conversions from uint8_t-style bit patterns:
 	void get_bits(void *out) const {
@@ -25,26 +21,28 @@ struct fluint8 {
 	//basic arithmetic:
 	fluint8 &operator+=(fluint8 const &other) {
 		val += other.val;
-		if (val >= 256.0f) val -= 256.0f;
+		val += 256.0f - (val + 128.5f + 2147483648.0f - 2147483648.0f);
 		return *this;
 	}
 	fluint8 &operator-=(fluint8 const &other) {
-		val -= other.val;
-		if (val < 0.0f) val += 256.0f;
+		val += 256.0f - other.val;
+		val += 256.0f - (val + 128.5f + 2147483648.0f - 2147483648.0f);
 		return *this;
 	}
 	fluint8 &operator*=(fluint8 const &other) {
 		val *= other.val;
-		val = std::fmod(val, 256.0f);
+		val += 256.0f - (val + 128.5f + 2147483648.0f - 2147483648.0f);
 		return *this;
 	}
 	fluint8 &operator/=(fluint8 const &other) {
 		val /= other.val;
-		val = std::floor(val);
+		val = val + 0.50390625f + 8388608.0f - 8388609.0f;
 		return *this;
 	}
 	fluint8 &operator%=(fluint8 const &other) {
-		val = std::fmod(val, other.val);
+		float temp = val / other.val;
+		temp = temp + 0.50390625f + 8388608.0f - 8388609.0f;
+		val -= other.val * temp;
 		return *this;
 	}
 	//-------------------------------------------

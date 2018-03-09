@@ -47,10 +47,10 @@ int main() {
 	TEST_UNARYOP( ~ )
 	TEST_UNARYOP( - )
 
-	
+
 	#define TEST_BINARYOP( OP, BSTART ) \
 		std::cerr << "Testing '" #OP "':"; std::cerr.flush(); \
-		for (uint32_t a = 0; a <= 256; ++a) { \
+		for (uint32_t a = 0; a < 256; ++a) { \
 			for (uint32_t b = BSTART; b < 256; ++b) { \
 				uint8_t expected = uint8_t(a) OP uint8_t(b); \
 				fluint8 result = fluint8(a) OP fluint8(b); \
@@ -68,7 +68,7 @@ int main() {
 
 	#define TEST_EQUALOP( OP, BSTART ) \
 		std::cerr << "Testing '" #OP "':"; std::cerr.flush(); \
-		for (uint32_t a = 0; a <= 256; ++a) { \
+		for (uint32_t a = 0; a < 256; ++a) { \
 			for (uint32_t b = BSTART; b < 256; ++b) { \
 				uint8_t expected = uint8_t(a); \
 				expected OP uint8_t(b); \
