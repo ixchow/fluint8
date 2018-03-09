@@ -69,8 +69,7 @@ struct fluint8 {
 	}
 	fluint8 operator-() const {
 		fluint8 ret(*this);
-		ret.val = -ret.val;
-		if (ret.val != 0.0f) ret.val += 256.0f;
+		ret.val = (val + 127.5f + 2147483648.0f - 2147483648.0f) - val;
 		return ret;
 	}
 	//-------------------------------------------
