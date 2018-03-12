@@ -40,13 +40,12 @@
 
 \author{Jim McCann\thanks{e-mail: ix@tchow.com}\\TCHOW llc \and Your Name Here}
 
-%\teaser{
-%\centering
-%\Huge
-%A ? B : C
-%\caption{\label{fig-ternary}
-%The ternary traditional operator (``tradnary operator'') evaluates to either B or C depending on the truth of operand A.
-%}}
+\teaser{
+\centering
+\includegraphics[width=3in]{ieee754-binary32.pdf} \huge $= -1^{S}\cdot 2^{E-127-23} \cdot (2^{23} + M)$
+\caption{\label{fig-binary32}
+Our library performs unsigned integer operations using only arithmatic operations on IEEE754 floating point numbers stored in binary32 format (pictured).
+}}
 
 %\keywords{anger, invective, morality}
 \begin{document}
@@ -73,9 +72,7 @@ As far as we are aware, no processor exists for which this library would be requ
 However, perhaps you should consider that a challenge.
 
 \section{Floating Point}
-TODO: image of floating point number either here or in the teaser
-
-An IEEE 754 single-precision floating point number (binary32 format) is stored as a sign bit, a 8-bit exponent, and a 23-bit mantissa.
+An IEEE 754 single-precision floating point number (binary32 format) is stored as a sign bit, a 8-bit exponent, and a 23-bit mantissa (Figure~\ref{fig-binary32}).
 Except for special cases, the number represented by a floating point number with sign $S$, exponent $E$, and mantissa $M$ is
 \footnote{or at least this is what wikipedia says, so I'm going with that, and it seems to work out.}:
 \begin{displaymath}
