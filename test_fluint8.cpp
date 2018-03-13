@@ -46,6 +46,7 @@ int main() {
 
 	TEST_UNARYOP( ~ )
 	TEST_UNARYOP( - )
+	TEST_UNARYOP( + )
 
 
 	#define TEST_BINARYOP( OP, BSTART ) \

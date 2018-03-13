@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstring>
+#include "fluint8.h"
 
 struct fluint8 {
 	//-------------------------------------------
@@ -21,17 +21,17 @@ struct fluint8 {
 	//basic arithmetic:
 	fluint8 &operator+=(fluint8 const &other) {
 		val += other.val;
-		val += 256.0f - (val + 128.5f + 2147483648.0f - 2147483648.0f);
+		val -= val - 127.5f + 3221225472.0f - 3221225472.0f;
 		return *this;
 	}
 	fluint8 &operator-=(fluint8 const &other) {
-		val += 256.0f - other.val;
-		val += 256.0f - (val + 128.5f + 2147483648.0f - 2147483648.0f);
+		val -= other.val;
+		val -= val - 127.5f + 3221225472.0f - 3221225472.0f;
 		return *this;
 	}
 	fluint8 &operator*=(fluint8 const &other) {
 		val *= other.val;
-		val += 256.0f - (val + 128.5f + 2147483648.0f - 2147483648.0f);
+		val -= val - 127.5f + 3221225472.0f - 3221225472.0f;
 		return *this;
 	}
 	fluint8 &operator/=(fluint8 const &other) {
@@ -46,7 +46,7 @@ struct fluint8 {
 		return *this;
 	}
 	//-------------------------------------------
-	//bitwise arithmetic:
+	//bitwise operations:
 	fluint8 &operator&=(fluint8 const &other) {
 		*this = (*this & other);
 		return *this;
@@ -72,6 +72,10 @@ struct fluint8 {
 		ret.val = (val + 127.5f + 2147483648.0f - 2147483648.0f) - val;
 		return ret;
 	}
+	fluint8 operator+() const {
+		fluint8 ret(*this);
+		return ret;
+	}
 	//-------------------------------------------
 	//binary operations:
 	fluint8 operator&(fluint8 const &other) const {
@@ -87,10 +91,28 @@ struct fluint8 {
 		return fluint8(x);
 	}
 	fluint8 operator|(fluint8 const &other) const {
-		return ~(~(*this) & ~other);
+		float a = val;
+		float b = other.val;
+
+		float ax, bx, x = 0.0f;
+		for (float c = 2147483648.0f; c != 8388608.0f; c *= 0.5f) {
+			a -= ax = (a + 1.0f + c-c)/ 2.0f;
+			b -= bx = (b + 1.0f + c-c)/ 2.0f;
+			x = 0.5f * x + ax * ax + bx * bx - ax * bx;
+		}
+		return fluint8(x);
 	}
 	fluint8 operator^(fluint8 const &other) const {
-		return ~(~(*this) & ~other) & ~(*this & other);
+		float a = val;
+		float b = other.val;
+
+		float ax, bx, x = 0.0f;
+		for (float c = 2147483648.0f; c != 8388608.0f; c *= 0.5f) {
+			a -= ax = (a + 1.0f + c-c)/ 2.0f;
+			b -= bx = (b + 1.0f + c-c)/ 2.0f;
+			x = 0.5f * x + (ax - bx) * (ax - bx);
+		}
+		return fluint8(x);
 	}
 
 	//-------------------------------------------

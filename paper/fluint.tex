@@ -56,8 +56,11 @@ Our library performs unsigned integer operations using only arithmetic operation
 We present {\em fluint8}, a library for performing integer math, including basic arithmetic and bitwise logical operations, using only basic floating point operations.
 \end{abstract}
 
+%D.2.3 = 0xD23 = 0x45523000 (floating point)
+%         exponent:45
+%0x305245
 \begin{CRcatlist}
-\CRcat{\_.\_.\_}{Blank}{Blankings}{\small Blank}
+\CRcat{$(1.10100100011)_{2}\times{}2^{11}$}{Software}{Software Engineering}{\small Coding Tools and Techniques}
 \end{CRcatlist}
 
 \section{Introduction}
@@ -99,18 +102,66 @@ Rounding and precision loss leads to this fun fact:
 \end{center}
 (Hot take: floating-point operations are non-commutative.)
 
-\section{Storage Format}
+\section{The {\em fluint8} Library}
+The fluint8 library provides all of the mathematical and logical operations one expects on 8-bit integers, using only floating point addition, subtraction, multiplication, and division --
+other than a loop with fixed bounds which could be unrolled by the compiler, no conditionals or function calls are required.
+
+In this section we go through the library operation by operation, explaining how each function works.
+
+\subsection{Storage Format}
 Our library represents unsigned 8-bit integers as their equivalent floating point values.
 In other words, the value {\tt uint\_t(127)} is represented as {\tt 127.0f}.
-This straightforward equivalence makes it very easy to write basic mathematical functions.
+This straightforward equivalence makes is convenient when writing basic mathematical functions.
 
-\section{Arithmetic Functions}
-Our library implements {\tt +}, {\tt -}, {\tt *}, {\tt /}, and {\tt -} by treating floating point numbers as real numbers; an approach that often works:
+In order to support, e.g., reading data from files, our library includes functions that convert between floating point numbers and bit-patterns of their equivalent 8-bit unsigned representation.
+
+{\tt
+void fu8\_to\_bits(float a, void *out) \{ \\
+$\phantom{XX}$a += 8388608.0f; \\
+$\phantom{XX}$memcpy(out, \&a, size\_t(1.0f)); \\
+\}
+}
+
+The function {\tt fu8\_to\_bits} adds a large enough number to {\tt a} that its mantissa's least-significant bit now represents 1.
+Essentially, the code is shoving the integer information stored in {\tt a} to the least-significant-byte of the representation, and then copying\footnote{
+The astute reader will notice that we've taken care to avoid using an integer constant as a parameter to {\tt memcpy}.
+Presumably on processors without integer support {\tt size\_t} must be a floating-point type.
+And, yes, we promised above not to use function calls, but it's hard to copy a byte without integer types.
+} it out to the destination.
+
+The same trick works when setting a floating point number from an integer bit pattern:
+
+{\tt
+float fu8\_from\_bits(void const *from) \{ \\
+$\phantom{XX}$float a = 8388608.0f; \\
+$\phantom{XX}$memcpy(\&a, from, size\_t(1.0f)); \\
+$\phantom{XX}$return a - 8388608.0f; \\
+\}
+}
+
+
+\begin{figure}[tb!]
+\huge TODO Figure Figure Figure
+\caption{\label{fig-mod-graph} Comparing {\tt fmod(x, 256.0f)} to the expression {\tt 256.0f - (x + 128.5f + 2147483648.0f - 2147483648.0f)} over the range {\tt [-256.0f, 512.0f]}.
+{\small Plot created using gnuplot.}}
+\end{figure}
+
+% http://en.cppreference.com/w/cpp/language/operator_arithmetic
+\subsection{Arithmetic Functions}
+Our library implements {\tt +}, {\tt -}, {\tt *}, {\tt /}, and {\tt -} by treating floating point numbers as real numbers; an approach that often works, but requires some post-processing to deal with roll-over:
 
 {\tt
 float fu8\_add(float a, float b) \{ \\
-$\phantom{XX}$return fmodf(a+b,256.0f); \\
+$\phantom{XX}$float x = a + b; \\
+$\phantom{XX}$x += x - 127.5f + 3221225472.0f - 3221225472.0f; \\
+$\phantom{XX}$return x; \\
 \} \\
+}
+
+Here, the second line of the function computes {\tt fmodf(x, 256.0f)} by rounding {\tt x} to the next-greater multiple of {\tt 256.0f}, then subtracting this rounded value.
+Don't believe us? Examine the convincing graph in Figure~\ref{fig-mod-graph}.
+
+{\tt
 float fu8\_sub(float a, float b) \{ \\
 $\phantom{XX}$return fmodf(a+256.0f-b,256.0f); \\
 \} \\
@@ -127,39 +178,15 @@ $\phantom{XX}$return fmodf(256.0f-a,256.0f); \\
 
 Notice that the problem of figuring out how to, e.g., implement branching and conditional tests are left to the standard library functions.
 
-\section{Conversion Functions}
-In order to support, e.g., reading data from files, our library includes functions that convert between floating point numbers and bit-patterns of their equivalent 8-bit unsigned representation.
-This is where the code starts to get fun.
-
-{\tt
-void fu8\_to\_bits(float a, void *out) \{ \\
-$\phantom{XX}$a += 8388608.0f; \\
-$\phantom{XX}$memcpy(out, \&a, size\_t(1.0f)); \\
-\}
-}
-
-What this code does is add a large enough number to {\tt a} that its mantissa's least-significant bit now represents 1.
-Essentially, the code is shoving the integer information stored in {\tt a} to the least-significant-byte of the representation, and then copying\footnote{
-The astute reader will notice that we've taken care to avoid using an integer constant as a parameter to {\tt memcpy}.
-Presumably on processors without integer support {\tt size\_t} must be a floating-point type.
-} it out to the destination.
-
-The same trick works when setting a floating point number from an integer bit pattern:
-
-{\tt
-float fu8\_from\_bits(void const *from) \{ \\
-$\phantom{XX}$float a = 8388608.0f; \\
-$\phantom{XX}$memcpy(\&a, from, size\_t(1.0f)); \\
-$\phantom{XX}$return a - 8388608.0f; \\
-\}
-}
-
-
-\section{Bitwise Operations}
+\subsection{Bitwise Operations}
 
 Things really get interesting when we begin to look at bitwise operations, which aren't standard operations on floating point numbers\footnote{Though they seem well-defined; maybe a language-designer oversight?}.
 
+<<<<<<< HEAD
 Let's begin with bitwise negation (${\tt _{\verb+~+}}$).
+=======
+Let's begin with bitwise negation ({\tt \textasciitilde}).
+>>>>>>> 0ddcaaae3dc334ecaac88b23ab4f1e79c52e9cf1
 This one is relatively easy to explain -- an unsigned 8-bit integer plus its bitwise complement is always 255, which makes negation as easy as subtraction:
 
 {\tt
@@ -185,9 +212,8 @@ $\phantom{XX}$return x; \\
 
 Note that though this is presented as a loop, the loop has constant bounds and could be unrolled by a compiler into eight repetitions of the same code.
 
-So, what sort of trickery is going on here?
-Obviously this code is treating {\tt a} and {\tt b} bit-by-bit, but how?
-The key turns out to be this little waving guy; we'll call it Milt:
+This code peels apart {\tt a} and {\tt b} bit-by-bit using a similar trick to the floating point modulus idea we explained earlier.
+In this case, however, we've formatted the code so it has a little waving guy in it, who we will call Milt:
 
 \begin{center}
 \huge
