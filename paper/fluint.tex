@@ -300,7 +300,37 @@ TODO: fill in the rest of the table with an example run.
 
 \section{Optimization}
 
-TODO(tom7): describe two-bits-at-time technique
+The previous routine computes a bitwise function a single bit at a
+time. While clean and logically motivated, it seems possible to
+improve bandwidth by processing multiple bits at once. As a
+proof-of-concept, the following routine computes the exclusive-or
+function (\verb+^+) for two {\tt fluint}s in the range $0$-$3$.
+
+{ \tt
+float f8\_xor2bit(float a, float b) \{ \\
+\phantom{XX}return truncf( \\
+\phantom{XXXX}fmod(((a * -1.89269124e+30f) + \\
+\phantom{XXXXXXXXXX}(b * -1.09500709e+35f)) * \\
+\phantom{XXXXXXXXXXXX}-1.14474456e-18f, \\
+\phantom{XXXXXXXXXX}4.77664232f)); \\
+\}
+}
+
+\begin{figure}[tb!]
+\includegraphics[width=\columnwidth]{xor2bitcube}
+\caption{
+  3D graph of
+  $((a \times -1.89269124 \!\!\times\!\! 10^{30} + (b \times -1.09500709 \!\!\times\!\! 10^{35})) \times -1.14474456 \!\!\times\!\! 10^{-18}) \mod 4.77664232$
+  with $a$ and $b$ each ranging from $0$--$3.0$.
+%
+  {\small Plot created using Wolfram Alpha Computational Knowledge Engine.}} \label{fig:xor2bit}
+\end{figure}
+
+The routine works by computing a very noisy function that just happens
+to come close to the correct results for all 16 possible inputs. Don't
+believe us? Barbecue your eyes of Figure~\ref{fig:xor2bit}. This
+routine uses {\tt fmod} and {\tt truncf}, but the same
+loss-of-precision tricks from before can likely be used to avoid them.
 
 \section{Not Optimization}
 
