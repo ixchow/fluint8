@@ -11,6 +11,7 @@
 
 \usepackage{parskip}
 \usepackage{footnote}
+\usepackage[breaklinks,hidelinks]{hyperref}
 
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
 
@@ -59,6 +60,7 @@ Our library performs unsigned integer operations using only arithmetic operation
 \begin{abstract}
 We present {\em fluint8}, a library for performing integer math, including basic arithmetic and bitwise logical operations, using only basic floating point operations.
 \end{abstract}
+\setcounter{footnote}{2}
 
 %D.2.3 = 0xD23 = 0x45523000 (floating point)
 %         exponent:45
@@ -72,7 +74,7 @@ There are a surfeit of libraries that exist to perform floating point operations
 This is unsurprising, as many such processors exist -- from ancient 286's to modern embedded microcontrollers.
 These libraries use many integer instructions to emulate the action of a floating point unit, providing correct and useful (if slow) results.
 
-We present a small header-only C++ library to emulate integer operations -- specifically 8-bit unsigned integer operations -- using standard IEEE 754 single-precision (binary32) floating point math.
+We present a small header-only C library to emulate integer operations -- specifically 8-bit unsigned integer operations -- using standard IEEE 754 single-precision (binary32) floating point math.
 Our presented operations have been designed to be succinct but also pleasantly puzzling.
 
 As far as we are aware, no processor exists for which this library would be required.
@@ -86,7 +88,7 @@ Except for special cases, the number represented by a floating point number with
 -1^{S}\cdot (1.M)_2 \cdot 2^{E-127}
 \end{displaymath}
 
-Particularly, notice that the leading ``1'' in the fraction is implicit in the representation (it is implied by the exponent).
+Particularly, notice that the leading ``1'' in the fraction is implicit in the representation (it is implied by a non-zero exponent\footnote{An all-zero exponent is used for special numbers like zero, but we're not going to go into that. Wait, we just did.}).
 
 This means that the range of integers that can be represented (without loss of precision) is
 \begin{displaymath}
@@ -110,19 +112,21 @@ Rounding and precision loss leads to this fun fact:
 The fluint8 library provides all of the mathematical and logical operations one expects on 8-bit integers, using only floating point addition, subtraction, multiplication, and division --
 other than a loop with fixed bounds which could be unrolled by the compiler, no conditionals or function calls are required.
 
+Full source code for the library (and this paper) are available at \url{https://github.com/ixchow/fluint8}.
+
 In this section we go through the library operation by operation, explaining how each function works.
 
 \subsection{Storage Format}
 Our library represents unsigned 8-bit integers as their equivalent floating point values.
 In other words, the value {\tt uint\_t(127)} is represented as {\tt 127.0f}.
-This straightforward equivalence makes is convenient when writing basic mathematical functions.
+This straightforward equivalence is convenient when writing basic mathematical functions.
 
 In order to support, e.g., reading data from files, our library includes functions that convert between floating point numbers and bit-patterns of their equivalent 8-bit unsigned representation.
 
 {\tt
 void fu8\_to\_bits(float a, void *out) \{ \\
 $\phantom{XX}$a += 8388608.0f; \\
-$\phantom{XX}$memcpy(out, \&a, size\_t(1.0f)); \\
+$\phantom{XX}$memcpy(out, \&a, (size\_t)(1.0f)); \\
 \}
 }
 
@@ -138,7 +142,7 @@ The same trick works when setting a floating point number from an integer bit pa
 {\tt
 float fu8\_from\_bits(void const *from) \{ \\
 $\phantom{XX}$float a = 8388608.0f; \\
-$\phantom{XX}$memcpy(\&a, from, size\_t(1.0f)); \\
+$\phantom{XX}$memcpy(\&a, from, (size\_t)(1.0f)); \\
 $\phantom{XX}$return a - 8388608.0f; \\
 \}
 }
@@ -146,8 +150,8 @@ $\phantom{XX}$return a - 8388608.0f; \\
 
 \begin{figure}[tb!]
 \includegraphics[width=\columnwidth]{fmodf.pdf}
-\caption{\label{fig-mod-graph} Comparing {\tt fmod(x, 256.0f)} to the expression {\tt 256.0f - (x + 128.5f + 2147483648.0f - 2147483648.0f)} over the range {\tt [-256.0f, 512.0f]}.
-Notice that the expression is positive for negative numbers, making it more suited when simulating integer rollover.
+\caption{\label{fig-mod-graph} Comparing {\tt fmodf(x, 256.0f)} to the expression {\tt x - 127.5f + 3221225472.0f - 3221225472.0f} over the range {\tt [-256.0f, 512.0f]}.
+Notice that the expression is positive for negative numbers, making it more useful for simulating integer rollover.
 {\small Plot created using gnuplot.}}
 \end{figure}
 
@@ -175,10 +179,10 @@ $\phantom{XX}$return x; \\
 \} \\
 }
 
-Here, the second line of the function computes {\tt fmodf(x, 256.0f)} by rounding {\tt x} to the next-greater multiple of {\tt 256.0f} (rounding is forced by adding {\tt 3221225472.0f} to make the least-significant-digit of the number have value 256.0f), then subtracting this rounded value.
+Here, the second line of the function computes {\tt fmodf(x, 256.0f)} by rounding {\tt x} to the next-greater multiple of {\tt 256.0f} (rounding is forced by adding {\tt 3221225472.0f} to make the least-significant-digit of the number have value 256), then subtracting this rounded value.
 Don't believe us? Examine the convincing graph in Figure~\ref{fig-mod-graph}.
 
-Most of the remaining math functions follow this "operate then wrap" format:
+Most of the remaining math functions follow this ``operate then wrap'' paradigm:
 
 {\tt
 float fu8\_sub(float a, float b) \{ \\
@@ -200,7 +204,7 @@ $\phantom{XX}$return (a + 127.5f + 3221225472.0f - 3221225472.0f) - a;\\
 }
 
 Our add-and-subtract modulus function always returns a positive number, which we take advantage of in the subtraction function.
-The negation function uses a similar trick to either subtract val from {\tt 256.0f} if positive or from {\tt 0.0f} otherwise.
+The negation function uses a similar trick to either subtract {\tt a} from {\tt 256.0f} if positive or from {\tt 0.0f} otherwise.
 
 
 {\tt
@@ -245,6 +249,13 @@ $\phantom{XX}$return 255.0f - a; \\
 \}
 }
 
+\begin{figure}[tb!]
+\includegraphics[width=\columnwidth]{milt.png}
+\caption{\label{fig-milt-graph}
+The value of {\tt a + 1.0f + c-c)/ 2.0f} for {\tt c} ranging from {\tt 2147483648.0f} (milt8) to {\tt 16777216.0f} (milt1).
+{\small Plot created in Google Sheets.}
+}\end{figure}
+
 Things get a bit more interesting when computing bitwise and ({\tt \&}):
 
 {\tt
@@ -270,33 +281,35 @@ In this case, however, we've formatted the code so it has a little waving guy in
 {\tt c-c)/}
 \end{center}
 
-Though it looks like Milt is just hanging out, minding its own business, and not changing the value of the expression,
-Milt is in fact doing something surprisingly nonlinear.
 
-TODO: plots of the effect of Milt.
+
+Though it looks like Milt is just hanging out, minding its own business, and not changing the value of the expression,
+Milt is in fact doing something surprisingly nonlinear (Figure~\ref{fig-milt-graph}).
+
+
 
 So when Milt's eyes are {\tt 2147483648.0f}, it is extracting twice the value of the MSB of {\tt a},
 which in turn is stored in {\tt ax} and subtracted from {\tt a}.
-In this way, the code peels off each successive most-significant bit from {\tt a} and {\tt b} and accumulates their product to the final result.
+In this way, the code peels off each successive most-significant bit from {\tt a} and {\tt b} and accumulates their product into the final result.
 
 This leaves only the mystery of why {\tt x} is being divided by two each loop iteration.
 But this isn't a mystery at all.
-Consider computing {\tt 128 \& 255}.
+Consider computing {\tt 171 \& 226}.
 Notice that on the first iteration, the product {\tt 128.0f * 128.0f} would be added to {\tt x};
-the multiplication by a factor of {\tt 0.5f} on each subsequent iteration simply -- in aggregate -- bring it to the correct result of {\tt 128.0f}.
+the multiplications by a factor of {\tt 0.5f} on each subsequent iteration simply -- in aggregate -- bring it to the correct result of {\tt 128.0f}.
 
 { \tt
-\begin{tabular}{r|r|r|r|r}
+\begin{tabular}{r|r|r|r|r|r}
 \multicolumn{1}{c|}{a} &
 \multicolumn{1}{c|}{b} &
 \multicolumn{1}{c|}{ax} &
 \multicolumn{1}{c|}{bx} &
-\multicolumn{1}{c}{x} \\\hline
-177.0f & 233.0f & 128.0f & 128.0f & 16384.0f \\
+\multicolumn{1}{c|}{x} &
+\multicolumn{1}{c}{c} \\\hline
+\input{and_table.tex}
 \end{tabular}
 }
 
-TODO: fill in the rest of the table with an example run.
 
 \section{Optimization}
 
@@ -307,7 +320,7 @@ proof-of-concept, the following routine computes the exclusive-or
 function (\verb+^+) for two {\tt fluint}s in the range $0$-$3$.
 
 { \tt
-float f8\_xor2bit(float a, float b) \{ \\
+float fu8\_xor2bit(float a, float b) \{ \\
 \phantom{XX}return truncf( \\
 \phantom{XXXX}fmod(((a * -1.89269124e+30f) + \\
 \phantom{XXXXXXXXXX}(b * -1.09500709e+35f)) * \\
@@ -317,7 +330,9 @@ float f8\_xor2bit(float a, float b) \{ \\
 }
 
 \begin{figure}[tb!]
-\includegraphics[width=\columnwidth]{xor2bitcube}
+\begin{center}
+\includegraphics[width=0.6\columnwidth]{xor2bitcube}
+\end{center}
 \caption{
   3D graph of
   $((a \times -1.89269124 \!\!\times\!\! 10^{30} + (b \times -1.09500709 \!\!\times\!\! 10^{35})) \times -1.14474456 \!\!\times\!\! 10^{-18}) \mod 4.77664232$

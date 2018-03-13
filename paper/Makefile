@@ -25,6 +25,12 @@ endif
 % : %.cpp
 	$(CPP) -o '$@' '$<'
 
+and_table.tex : make_and_table
+	./make_and_table > and_table.tex
+
+milt_graph.csv : make_milt_graph
+	./make_milt_graph > milt_graph.csv
+
 mod_graph.csv : make_mod_graph
 	./make_mod_graph > mod_graph.csv
 
