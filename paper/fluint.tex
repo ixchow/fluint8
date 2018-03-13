@@ -145,14 +145,27 @@ $\phantom{XX}$return a - 8388608.0f; \\
 
 
 \begin{figure}[tb!]
-\huge TODO Figure Figure Figure
+\includegraphics[width=\columnwidth]{fmodf.pdf}
 \caption{\label{fig-mod-graph} Comparing {\tt fmod(x, 256.0f)} to the expression {\tt 256.0f - (x + 128.5f + 2147483648.0f - 2147483648.0f)} over the range {\tt [-256.0f, 512.0f]}.
+Notice that the expression is positive for negative numbers, making it more suited when simulating integer rollover.
 {\small Plot created using gnuplot.}}
 \end{figure}
 
+
+\begin{figure}[tb!]
+\begin{center}
+\includegraphics[width=0.49\columnwidth]{floor256.png}
+\includegraphics[width=0.49\columnwidth]{floor8.png}
+\end{center}
+\caption{\label{fig-floor-graph} Comparing {\tt floorf(x)} to the expression {\tt x + 0.50390625f + 8388608.0f - 8388609.0f} over the all quotients {\tt [0.0f, 255.0f] / [1.0f, 255.0f]}.
+The functions match at all plotted points.
+{\small Plot created using R.}}
+\end{figure}
+
+
 % http://en.cppreference.com/w/cpp/language/operator_arithmetic
 \subsection{Arithmetic Functions}
-Our library implements {\tt +}, {\tt -}, {\tt *}, {\tt /}, and {\tt -} by treating floating point numbers as real numbers; an approach that often works, but requires some post-processing to deal with roll-over:
+Our library implements {\tt +}, {\tt -}, {\tt *}, {\tt /}, {\tt +}, and {\tt -} by treating floating point numbers as real numbers; an approach that often works, but requires some post-processing to deal with roll-over:
 
 {\tt
 float fu8\_add(float a, float b) \{ \\
@@ -162,24 +175,55 @@ $\phantom{XX}$return x; \\
 \} \\
 }
 
-Here, the second line of the function computes {\tt fmodf(x, 256.0f)} by rounding {\tt x} to the next-greater multiple of {\tt 256.0f}, then subtracting this rounded value.
+Here, the second line of the function computes {\tt fmodf(x, 256.0f)} by rounding {\tt x} to the next-greater multiple of {\tt 256.0f} (rounding is forced by adding {\tt 3221225472.0f} to make the least-significant-digit of the number have value 256.0f), then subtracting this rounded value.
 Don't believe us? Examine the convincing graph in Figure~\ref{fig-mod-graph}.
+
+Most of the remaining math functions follow this "operate then wrap" format:
 
 {\tt
 float fu8\_sub(float a, float b) \{ \\
-$\phantom{XX}$return fmodf(a+256.0f-b,256.0f); \\
+$\phantom{XX}$float x = a - b; \\
+$\phantom{XX}$x -= x - 127.5f + 3221225472.0f - 3221225472.0f; \\
+$\phantom{XX}$return x; \\
 \} \\
 float fu8\_mul(float a, float b) \{ \\
-$\phantom{XX}$return fmodf(a*b,256.0f); \\
+$\phantom{XX}$float x = a * b; \\
+$\phantom{XX}$x -= x - 127.5f + 3221225472.0f - 3221225472.0f; \\
+$\phantom{XX}$return x; \\
 \} \\
-float fu8\_div(float a, float b) \{ \\
-$\phantom{XX}$return floorf(a/b); \\
+float fu8\_pos(float a) \{ \\
+$\phantom{XX}$return a; \\
 \} \\
 float fu8\_neg(float a) \{ \\
-$\phantom{XX}$return fmodf(256.0f-a,256.0f); \\
+$\phantom{XX}$return (a + 127.5f + 3221225472.0f - 3221225472.0f) - a;\\
 \} \\
-% TODO: Did you mean to include f8\_mod here? -tom
 }
+
+Our add-and-subtract modulus function always returns a positive number, which we take advantage of in the subtraction function.
+The negation function uses a similar trick to either subtract val from {\tt 256.0f} if positive or from {\tt 0.0f} otherwise.
+
+
+{\tt
+float fu8\_div(float a, float b) \{ \\
+$\phantom{XX}$float x = a / b; \\
+$\phantom{XX}$x = x + 0.50390625f + 8388608.0f - 8388609.0f; \\
+$\phantom{XX}$return x; \\
+\}
+}
+
+The division function computes the floor of a value by rounding that value to the next-largest and subtracting one (Figure~\ref{fig-floor-graph}).
+In this particular instance, the constant required is small enough that the subtraction of one can be rolled into the subtraction of the large constant (we choose this over rounding down mostly for {\tt a e s t h e t i c} reasons).
+
+
+\begin{figure}[tb!]
+\begin{center}
+\huge TODO TODO TODO
+\end{center}
+\caption{\label{fig-not-graph} graph of {\tt 255.0f - x} (the bitwise complement of {\tt x}).
+{\small Plot created using a TI-92 plus graphing calculator.}}
+\end{figure}
+
+% TODO: Did you mean to include fu8_mod here or above? -tom
 
 For the division and modulus operations, fluint8 diverges from the
 normal behavior of integer instructions when the denominator is zero.
@@ -190,16 +234,12 @@ point, fluint8 may produce nonsense results. However, this is strictly
 compliant with the C and C++ standard, for which integer division by
 zero is formally undefined behavior.\footnote{``If the second operand of / or \% is zero the behavior is undefined.'' --- C++03 5.6.4}
 
-\medskip
-
-Notice that the problem of figuring out how to, e.g., implement branching and conditional tests are left to the standard library functions.
-
 \subsection{Bitwise Operations}
 
 Things really get interesting when we begin to look at bitwise operations, which aren't standard operations on floating point numbers\footnote{Though they seem well-defined; maybe a language-designer oversight?}.
 
-Let's begin with bitwise negation (${\tt _{\verb+~+}}$).
-This one is relatively easy to explain -- an unsigned 8-bit integer plus its bitwise complement is always 255, which makes negation as easy as subtraction:
+Let's begin with bitwise negation ({\tt \textasciitilde}).
+This one is relatively easy to explain -- an unsigned 8-bit integer plus its bitwise complement is always 255, which makes negation as easy as subtraction (Figure~\ref{fig-not-graph}):
 
 {\tt
 float fu8\_not(float a) \{ \\
