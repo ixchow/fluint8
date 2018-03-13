@@ -38,13 +38,15 @@
 \newcommand{\defbreak}{\vspace{1em}}
 \title{The {\em fluint8} Software Integer Library}
 
-\author{Jim McCann\thanks{e-mail: ix@tchow.com}\\TCHOW llc \and Your Name Here}
+\author{Jim McCann\thanks{e-mail: ix@tchow.com}\\TCHOW llc
+  \and
+  Tom Murphy VII\thanks{e-mail: tom7@tom7.org}\\tom7.org foundation}
 
 \teaser{
 \centering
 \includegraphics[width=3in]{ieee754-binary32.pdf} \huge $= -1^{S}\cdot 2^{E-127-23} \cdot (2^{23} + M)$
 \caption{\label{fig-binary32}
-Our library performs unsigned integer operations using only arithmatic operations on IEEE754 floating point numbers stored in binary32 format (pictured).
+Our library performs unsigned integer operations using only arithmetic operations on IEEE754 floating point numbers stored in binary32 format (pictured).
 }}
 
 %\keywords{anger, invective, morality}
@@ -68,7 +70,7 @@ There are a surfeit of libraries that exist to perform floating point operations
 This is unsurprising, as many such processors exist -- from ancient 286's to modern embedded microcontrollers.
 These libraries use many integer instructions to emulate the action of a floating point unit, providing correct and useful (if slow) results.
 
-We present a small header-only library to emulate integer operations -- specifically 8-bit unsigned integer operations -- using standard IEEE 754 single-precision (binary32) floating point math.
+We present a small header-only C++ library to emulate integer operations -- specifically 8-bit unsigned integer operations -- using standard IEEE 754 single-precision (binary32) floating point math.
 Our presented operations have been designed to be succinct but also pleasantly puzzling.
 
 As far as we are aware, no processor exists for which this library would be required.
@@ -93,7 +95,7 @@ which, conveniently, is far more than the $[0,255]$ range needed for storing 8-b
 When floating point operations result in numbers that cannot be accurately represented, the results are rounded according to the current rounding mode.
 The default rounding mode assumed in this paper is {\em roundTiesToEven}.
 I would say that it does what you expect, but floating point numbers seldom manage that feat.
-Regardless, this rounding mode means that whenever a value is exactly half way between two representable numbers, the number with a least-significant-bit of 0 is picked.
+Regardless, this rounding mode means that whenever a value is exactly halfway between two representable numbers, the number with a least-significant-bit of 0 is picked.
 
 Rounding and precision loss leads to this fun fact:
 \begin{center} \tt
@@ -286,7 +288,7 @@ the multiplication by a factor of {\tt 0.5f} on each subsequent iteration simply
 
 TODO: fill in the rest of the table with an example run.
 
-\section{Future Work}
+\section{Future Work} \label{sec:future}
 
 Design a processor for which this library is relevant.
 
