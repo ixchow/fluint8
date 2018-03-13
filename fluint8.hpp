@@ -2,6 +2,9 @@
 
 #include "fluint8.h"
 
+// Note missing: normal binary + - * / %
+// Bitwise shifts: << >> ~>>  -tom
+
 struct fluint8 {
 	//-------------------------------------------
 	//constructors:

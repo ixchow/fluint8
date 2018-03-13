@@ -331,6 +331,9 @@ to come close to the correct results for all 16 possible inputs. Don't
 believe us? Barbecue your eyes of Figure~\ref{fig:xor2bit}. This
 routine uses {\tt fmod} and {\tt truncf}, but the same
 loss-of-precision tricks from before can likely be used to avoid them.
+Four similar expressions can be composed to compute 8-bit exclusive-or,
+and/or it may be possible to find expressions that compute more bits
+at once.
 
 \section{Not Optimization}
 
@@ -343,9 +346,24 @@ buddy).
 \section{Applications}
 
 While direct hardware applications of this technology are currently
-theoretical (Section~\ref{sec:future}), 
-
-TODO(tom7): describe some applications
+theoretical (Section~\ref{sec:future}), there is at least one
+compelling application for {\it fluint8} in everyday practice. Many
+pieces of software use primarily integer instructions, letting the
+floating point unit lie completely dormant for many nanoseconds at a
+time. As has been known for decades, while the integer registers and
+functional units are occupied, the otherwise idle floating point units
+can be used to perform useful tasks. Unfortunately, no useful tasks
+were known for floating point instructions. Now, we see that normal
+integer operations (such as cryptography) can be simulated with these
+instructions and registers. With compiler support, a separate thread
+of non-interfering floating point instructions could be emitted, and
+arbitrarily interleaved with the integer ones, scheduled only when the
+integer unit would likely stall for a data dependency. This technique
+is {\em ultrathreading}, since it is one step better than {\em
+  hyperthreading}. For example, we hypothesize that during normal web
+browsing on a modern x86-64 processor, such code could mine as much as
+one Bitcoin per 107 trillion years, with no more than a 1\% loss of
+efficiency.
 
 \section{Future Work} \label{sec:future}
 
