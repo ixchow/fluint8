@@ -38,9 +38,11 @@
 \newcommand{\defbreak}{\vspace{1em}}
 \title{The {\em fluint8} Software Integer Library}
 
-\author{Jim McCann\thanks{e-mail: ix@tchow.com}\\TCHOW llc
+\author{Jim McCann\thanks{e-mail: ix@tchow.com}\\
+  TCHOW llc
   \and
-  Tom Murphy VII\thanks{e-mail: tom7@tom7.org}\\tom7.org foundation}
+  Tom Murphy VII\thanks{\protect \rotatebox[origin=c]{180}{e}-mail: tom7@tom7.org}\\
+  tom7.org foundation}
 
 \teaser{
 \centering
@@ -175,8 +177,20 @@ $\phantom{XX}$return floorf(a/b); \\
 \} \\
 float fu8\_neg(float a) \{ \\
 $\phantom{XX}$return fmodf(256.0f-a,256.0f); \\
-\}
+\} \\
+% TODO: Did you mean to include f8\_mod here? -tom
 }
+
+For the division and modulus operations, fluint8 diverges from the
+normal behavior of integer instructions when the denominator is zero.
+A typical processor triggers a fault upon integer division by zero,
+but IEEE 754 instead returns one of the special values {\it Infinity},
+{\it -Infinity} (or {\it NaN}) and continues calculating. After this
+point, fluint8 may produce nonsense results. However, this is strictly
+compliant with the C and C++ standard, for which integer division by
+zero is formally undefined behavior.\footnote{``If the second operand of / or \% is zero the behavior is undefined.'' --- C++03 5.6.4}
+
+\medskip
 
 Notice that the problem of figuring out how to, e.g., implement branching and conditional tests are left to the standard library functions.
 
@@ -245,6 +259,25 @@ the multiplication by a factor of {\tt 0.5f} on each subsequent iteration simply
 }
 
 TODO: fill in the rest of the table with an example run.
+
+\section{Optimization}
+
+TODO(tom7): describe two-bits-at-time technique
+
+\section{Not Optimization}
+
+The library should not be used with compiler options such as
+\verb+-ffast-math+ (which may assume properties that do not hold of
+IEEE754, like commutativity). This often optimizes away the entire
+fluint8 code, causing it to misbehave (whoa, not {\em that} fast,
+buddy).
+
+\section{Applications}
+
+While direct hardware applications of this technology are currently
+theoretical (Section~\ref{sec:future}), 
+
+TODO(tom7): describe some applications
 
 \section{Future Work} \label{sec:future}
 
