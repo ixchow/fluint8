@@ -38,7 +38,9 @@
 \newcommand{\defbreak}{\vspace{1em}}
 \title{The {\em fluint8} Software Integer Library}
 
-\author{Jim McCann\thanks{e-mail: ix@tchow.com}\\TCHOW llc \and Your Name Here}
+\author{Jim McCann\thanks{e-mail: ix@tchow.com}\\TCHOW llc
+  \and
+  Tom Murphy VII\thanks{e-mail: tom7@tom7.org}\\tom7.org foundation}
 
 \teaser{
 \centering
@@ -182,11 +184,7 @@ Notice that the problem of figuring out how to, e.g., implement branching and co
 
 Things really get interesting when we begin to look at bitwise operations, which aren't standard operations on floating point numbers\footnote{Though they seem well-defined; maybe a language-designer oversight?}.
 
-<<<<<<< HEAD
 Let's begin with bitwise negation (${\tt _{\verb+~+}}$).
-=======
-Let's begin with bitwise negation ({\tt \textasciitilde}).
->>>>>>> 0ddcaaae3dc334ecaac88b23ab4f1e79c52e9cf1
 This one is relatively easy to explain -- an unsigned 8-bit integer plus its bitwise complement is always 255, which makes negation as easy as subtraction:
 
 {\tt
